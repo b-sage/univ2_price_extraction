@@ -14,5 +14,10 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-The get_tokens script is dependent upon completion of the extract_pools script. These can either be run in order, or use the run_token_pull shell script provided.
+The get_tokens script is dependent upon completion of the extract_pools script. Ex.
+```
+python3 extract_pools.py
+
+python3 get_tokens.py
+```
 
