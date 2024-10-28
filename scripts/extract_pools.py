@@ -57,7 +57,7 @@ if __name__ == '__main__':
     end_block = eth_client.block_number()
     
     logs_generator = batch_client.get_logs(UNIV2_FACTORY, [PAIR_CREATED_TOPIC], start_block, end_block, block_inc=2000, req_inc=100)
-    for request_id, l in logs_generator:
+    for l in logs_generator:
         block_num = l['blockNumber']
         pair, _ = unpack_new_pair_log_data(l['data'])
         token0 = unpack_address(l['topics'][1])
