@@ -56,9 +56,9 @@ if __name__ == '__main__':
         start_block += 1 
     end_block = eth_client.block_number()
     
-    logs = flatten(list(batch_client.get_logs(UNIV2_FACTORY, [PAIR_CREATED_TOPIC], start_block, end_block, block_inc=2000, req_inc=100).values()))
-    for l in logs:
-        block_num = hex_to_int(l['blockNumber'])
+    logs_generator = batch_client.get_logs(UNIV2_FACTORY, [PAIR_CREATED_TOPIC], start_block, end_block, block_inc=2000, req_inc=100)
+    for l in logs_generator:
+        block_num = l['blockNumber']
         pair, _ = unpack_new_pair_log_data(l['data'])
         token0 = unpack_address(l['topics'][1])
         token1 = unpack_address(l['topics'][2])
