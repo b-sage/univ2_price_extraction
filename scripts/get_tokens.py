@@ -94,10 +94,8 @@ if __name__ == '__main__':
     new_tokens = [t for t in token_addrs if not existing_tokens.get(t)] 
     calls, idx_map = build_calls(new_tokens)
     result = batch_client.calls(calls, drop_reverts=True)
-    counter = 0
     #Since reverts are handled internally now by the client, it's a bit more difficult to access the bad tokens. Can use the idx map somehow
     for idx, r in result:
-        counter += 1
         token, selector = idx_map[idx].split('_')
         if not existing_tokens.get(token):
             existing_tokens[token] = {"address": token, "name": "", "decimals": 0, "symbol": ""}
