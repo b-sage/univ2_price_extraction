@@ -9,7 +9,7 @@ from evm_client.types.transaction import Transaction
 from evm_client.batch_client import BatchEthClient
 from evm_client.core.eth_core import EthCore
 from evm_client.crypto_utils import hex_to_int, unpack_address, decode_string, decode_bytes32
-from utils import get_pools, get_bad_tokens, peek
+from utils import get_pools, get_bad_tokens
 from config import (
     TOKENS_CSV,
     TOKENS_JSON,
@@ -25,25 +25,12 @@ def build_calls(tokens):
     idx_map = {}
     idx = 1
     for t in tokens:
-        name_call = Transaction(
-            '0x06fdde03',
-            to=t
-        )
-        idx_map[idx] = f"{t}_0x06fdde03"
-        idx += 1
-        decimals_call = Transaction(
-           '0x313ce567',
-           to=t
-        )
-        idx_map[idx] = f"{t}_0x313ce567"
-        idx += 1
-        symbol_call = Transaction(
-            '0x95d89b41',
-            to=t
-        )
-        idx_map[idx] = f"{t}_0x95d89b41"
-        idx += 1
-        calls += [name_call, decimals_call, symbol_call]
+        #                   name        decimals        symbol
+        for selector in ['0x06fdde03', '0x313ce567', '0x95d89b41']:
+            call = Transaction(selector, to=t)
+            idx_map[idx] = f"{t}_{selector}"
+            idx += 1
+            calls.append(call)
     return calls, idx_map
 
 def save_tokens(tokens, path=TOKENS_JSON):
@@ -83,8 +70,10 @@ if __name__ == '__main__':
     new_tokens = [t for t in token_addrs if not existing_tokens.get(t)] 
     calls, idx_map = build_calls(new_tokens)
     result = batch_client.calls(calls, drop_reverts=True)
-    #Since reverts are handled internally now by the client, it's a bit more difficult to access the bad tokens. Can use the idx map somehow
+    #this result indexes solution is ugly, but resolves the issue atleast
+    result_indexes = []
     for idx, r in result:
+        result_indexes.append(idx)
         token, selector = idx_map[idx].split('_')
         if not existing_tokens.get(token):
             existing_tokens[token] = {"address": token, "name": "", "decimals": 0, "symbol": ""}
@@ -101,6 +90,10 @@ if __name__ == '__main__':
                     existing_tokens[token]['symbol'] = sanitize(decode_string(r))
                 except:
                     existing_tokens[token]['symbol'] = sanitize(decode_bytes32(r).decode().replace('\x00', ''))
+    for idx, key in idx_map.items():
+        if idx not in result_indexes:
+            token, _ = key.split('_')
+            bad_tokens.append(token)
     save_tokens(existing_tokens)
     save_tokens_as_csv(existing_tokens)
     save_bad_tokens(bad_tokens)

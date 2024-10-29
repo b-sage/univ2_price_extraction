@@ -16,4 +16,3 @@ def get_bad_tokens(path=BAD_TOKENS_CSV):
         return []
     with open(path, 'r') as f:
         return flatten([line for line in csv.reader(f)])
-
