@@ -46,17 +46,6 @@ def build_calls(tokens):
         calls += [name_call, decimals_call, symbol_call]
     return calls, idx_map
 
-def get_bodies(calls):
-    bodies = []
-    idx_map = {}
-    idx = 1
-    for call in calls:
-        body = EthCore.get_eth_call_body(call, request_id=idx)
-        idx_map[idx] = f"{call.to}_{call.input_}"
-        bodies.append(body)
-        idx += 1
-    return bodies, idx_map
-
 def save_tokens(tokens, path=TOKENS_JSON):
     with open(path, 'w+') as f:
         json.dump(tokens, f)
@@ -115,10 +104,3 @@ if __name__ == '__main__':
     save_tokens(existing_tokens)
     save_tokens_as_csv(existing_tokens)
     save_bad_tokens(bad_tokens)
-        
-        
-
-     
-
-
-
