@@ -9,7 +9,7 @@ from evm_client.types.transaction import Transaction
 from evm_client.batch_client import BatchEthClient
 from evm_client.core.eth_core import EthCore
 from evm_client.crypto_utils import hex_to_int, unpack_address, decode_string, decode_bytes32
-from utils import get_pools, get_bad_tokens
+from utils import get_pools, get_bad_tokens, peek
 from config import (
     TOKENS_CSV,
     TOKENS_JSON,
@@ -20,24 +20,31 @@ from config import (
 def get_token_addresses_from_pools(pools):
     return flatten([[v['token0'], v['token1']] for v in pools.values()])
 
-#TODO: work on building out eth_call batching tomorrow
 def build_calls(tokens):
     calls = []
+    idx_map = {}
+    idx = 1
     for t in tokens:
         name_call = Transaction(
             '0x06fdde03',
             to=t
         )
+        idx_map[idx] = f"{t}_0x06fdde03"
+        idx += 1
         decimals_call = Transaction(
            '0x313ce567',
            to=t
         )
+        idx_map[idx] = f"{t}_0x313ce567"
+        idx += 1
         symbol_call = Transaction(
             '0x95d89b41',
             to=t
         )
+        idx_map[idx] = f"{t}_0x95d89b41"
+        idx += 1
         calls += [name_call, decimals_call, symbol_call]
-    return calls
+    return calls, idx_map
 
 def get_bodies(calls):
     bodies = []
@@ -49,24 +56,6 @@ def get_bodies(calls):
         bodies.append(body)
         idx += 1
     return bodies, idx_map
-
-#ugly... have to deal with pesky non-conforming tokens and other reverts.
-#should be able to internalize this to evm_client with flag eg drop_reverts=True on eth_calls
-def execute_token_calls(batch_client, bodies, idx_map, bad_tokens, results=None):
-    if not results:
-        results = {}
-    try:
-        return {**results, **batch_client.make_batch_request(bodies, 500)}
-    except NodeError as n:
-        busted_id = n.request_id
-        bad_token, _ = idx_map[busted_id].split('_')
-        if bad_token not in bad_tokens:
-            bad_tokens.append(bad_token)
-        results = {**results,**n.results}
-        res_max = max(list(results.keys())) if results else 0
-        bodies = [body for body in bodies if body['id'] != busted_id and body['id'] > res_max]
-        return execute_token_calls(batch_client, bodies, idx_map, bad_tokens, results=results)
-
 
 def save_tokens(tokens, path=TOKENS_JSON):
     with open(path, 'w+') as f:
@@ -103,11 +92,12 @@ if __name__ == '__main__':
 
     token_addrs = list(set([t for t in get_token_addresses_from_pools(pools) if t not in bad_tokens]))
     new_tokens = [t for t in token_addrs if not existing_tokens.get(t)] 
-    calls = build_calls(new_tokens)
-    bodies, idx_map = get_bodies(calls)
-    result = execute_token_calls(batch_client, bodies, idx_map, bad_tokens)
-    save_bad_tokens(bad_tokens)
-    for idx, r in result.items():
+    calls, idx_map = build_calls(new_tokens)
+    result = batch_client.calls(calls, drop_reverts=True)
+    counter = 0
+    #Since reverts are handled internally now by the client, it's a bit more difficult to access the bad tokens. Can use the idx map somehow
+    for idx, r in result:
+        counter += 1
         token, selector = idx_map[idx].split('_')
         if not existing_tokens.get(token):
             existing_tokens[token] = {"address": token, "name": "", "decimals": 0, "symbol": ""}
@@ -124,9 +114,9 @@ if __name__ == '__main__':
                     existing_tokens[token]['symbol'] = sanitize(decode_string(r))
                 except:
                     existing_tokens[token]['symbol'] = sanitize(decode_bytes32(r).decode().replace('\x00', ''))
-    
     save_tokens(existing_tokens)
     save_tokens_as_csv(existing_tokens)
+    save_bad_tokens(bad_tokens)
         
         
 
