@@ -51,7 +51,7 @@ def get_block_timestamps(batch_client, block_nums, req_inc=1000):
     return result
 
 def save_prices(prices, pair_addr, base_path=PRICES_PATH):
-    path = PRICES_PATH + f'/{pair_addr}.csv'
+    path = base_path + f'/{pair_addr}.csv'
     with open(path, 'w+') as f:
         writer = csv.writer(f)
         writer.writerows(prices)

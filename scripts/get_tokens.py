@@ -93,7 +93,8 @@ if __name__ == '__main__':
     for idx, key in idx_map.items():
         if idx not in result_indexes:
             token, _ = key.split('_')
-            bad_tokens.append(token)
+            if token not in bad_tokens:
+                bad_tokens.append(token)
     save_tokens(existing_tokens)
     save_tokens_as_csv(existing_tokens)
     save_bad_tokens(bad_tokens)
