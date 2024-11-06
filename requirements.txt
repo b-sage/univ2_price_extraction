@@ -17,7 +17,7 @@ eth-rlp==2.1.0
 eth-typing==5.0.1
 eth-utils==5.1.0
 eth_abi==5.1.0
-evm-client @ git+ssh://git@github.com/b-sage/evm_client@8f6ac0afbeee5c26e7a270e62fe8b91ebc483299
+evm-client @ git+ssh://git@github.com/b-sage/evm_client@uni_price
 frozenlist==1.4.1
 hexbytes==1.2.1
 idna==3.10
