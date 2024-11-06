@@ -1,12 +1,17 @@
 # Uniswap V2 Price Extraction
 
 ## Setup
+Clone Repo:
+```
+git clone git@github.com:b-sage/univ2_price_extraction.git
+```
+
 Set Environment Variables:
 ```
 export ETH_RPC_URL={YOUR RPC URL}
 export UNI_DATA_DIR={YOUR DATA DIR}
 ```
-The uni data dir is required, while the eth rpc url will default to llamarpc if not provided.
+UNI_DATA_DIR is required to be set, while ETH_RPC_URL will default to llamarpc if not set.
 
 Install requirements:
 ```
