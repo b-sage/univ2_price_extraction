@@ -34,7 +34,7 @@ python3 show_pairs_for_token.py --token {TOKEN ADDRESS}
 to show all pairs where this token is one of the underlying. Once a relevnt pair is determined, we can pass the pair address to pull_balance_data.py
 like so:
 ```
-python3 pull_balance_data.py --pairs {comma seperated list of pairs}
+python3 get_balance_data.py --pairs {comma seperated list of pairs}
 ```
 
 pull_balance_data will historically pull the balances of the pool every n blocks since inception of the pool, we can set n using --blocks_per_price
