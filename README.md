@@ -37,6 +37,6 @@ like so:
 python3 get_balance_data.py --pairs {comma seperated list of pairs}
 ```
 
-pull_balance_data will historically pull the balances of the pool every n blocks since inception of the pool, we can set n using --blocks_per_price
-arg to get_balance_data script. This will output a csv file by the name of the pair address containing timestamp, block number, token0 balance and
+get_balance_data will historically pull the balances of the pool every n blocks since inception of the pool, we can set n using --blocks_per_price
+arg. This will output a csv file by the name of the pair address containing timestamp, block number, token0 balance and
 token1 balance.
