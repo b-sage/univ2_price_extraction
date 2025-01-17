@@ -5,12 +5,14 @@ from hexbytes import HexBytes
 from eth_abi import decode
 from eth_utils import to_checksum_address
 from evm_client.batch_client import BatchEthClient
-from evm_client.batch_client.utils import flatten
+from evm_client.batch_client.utils import flatten, chunks
 from evm_client.sync_client import SyncEthClient
 from evm_client.crypto_utils import hex_to_int, unpack_address
+from evm_client.contract import Contract
 from utils import get_pools
 from constants import (
-    UNIV2_FACTORY, 
+    UNIV2_FACTORY,
+    UNIV2_FACTORY_ABI,
     UNIV2_FACTORY_DEPLOYMENT_BLOCK,
     PAIR_CREATED_TOPIC
 )
@@ -23,6 +25,15 @@ from config import (
 def unpack_new_pair_log_data(data):
     pair_address, _ = decode(['address', 'uint256'], HexBytes(data))
     return to_checksum_address(pair_address), _
+
+def build_filters(filter_, start_block, end_block):
+    filters = []
+    f = filter_
+    for chunk in chunks(list(range(start_block, end_block))):
+        f.set_from_block(chunk[0])
+        f.set_to_block(chunk[-1])
+        filters.append(f)
+    return filters
 
 def get_last_block_searched(pools):
     if not pools:
@@ -47,6 +58,8 @@ if __name__ == '__main__':
     eth_client = SyncEthClient(args.rpc_url)
     batch_client = BatchEthClient(args.rpc_url) 
     pools = get_pools()
+
+    factory = Contract(args.univ2_factory, UNIV2_FACTORY_ABI)
     
     start_block = get_last_block_searched(pools)
     if start_block == 0:
@@ -55,7 +68,12 @@ if __name__ == '__main__':
         #TODO: see if this introduces off by 1 error
         start_block += 1 
     end_block = eth_client.block_number()
-    
+   
+    filter_ = factory.events.PairCreated.build_filter()
+    filters = build_filters(filter_, start_block, end_block)
+
+    logs_generator = batch_client.get_logs_batch(filters, )
+
     logs_generator = batch_client.get_logs(UNIV2_FACTORY, [PAIR_CREATED_TOPIC], start_block, end_block, block_inc=2000, req_inc=100)
     for l in logs_generator:
         block_num = l['blockNumber']
